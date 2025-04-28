@@ -1,5 +1,6 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
+import 'package:oublie/splash_screen.dart';
 import 'loading.dart';
 
 void main() {
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
-      home: LoadingScreen(),
+      home: SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -113,9 +113,12 @@ class _BicherViewState extends State<BicherView> {
           padding: EdgeInsets.all(8.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text("Den numm vum Buch aginn:"),
+              const Text(
+                textAlign: TextAlign.start,
+                "Den numm vum Buch aginn:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               Padding(
                 padding: EdgeInsets.only(left: 20, right: 20),
                 child: TextField(

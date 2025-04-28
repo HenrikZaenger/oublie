@@ -52,12 +52,30 @@ class _SettingsViewState extends State<SettingsView> {
     return Scaffold(
       body: Column(
         children: [
-          ListTile(
-            title: Text("Klass"),
-            subtitle: Text(className),
-            onTap: () {
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ClassSelector()));
-            },
+          Card(
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(
+                "Klass",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(className),
+              onTap: () {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ClassSelector()));
+              },
+            ),
+          ),
+          Card(
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              title: Text(
+                "Open source Licenses",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                showLicensePage(context: context);
+              },
+            ),
           )
         ],
       ),
