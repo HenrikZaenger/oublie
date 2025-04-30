@@ -3,6 +3,7 @@ import 'package:oublie/class_selector.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:oublie/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key, required this.title});
@@ -32,7 +33,7 @@ class _SettingsViewState extends State<SettingsView> {
     if(classID == 0) {
       className = "Perséinlech";
     } else {
-      UntisClass? classData = await session?.getClassById(classID);
+      UntisClass? classData = await session.getClassById(classID);
       className = classData?.longName ?? "Error";
     }
      setState(() {
@@ -51,6 +52,8 @@ class _SettingsViewState extends State<SettingsView> {
     }
     return Scaffold(
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Card(
             margin: const EdgeInsets.all(8),
@@ -76,6 +79,30 @@ class _SettingsViewState extends State<SettingsView> {
                 showLicensePage(context: context);
               },
             ),
+          ),
+          Spacer(),
+          Card(
+            margin: const EdgeInsets.all(8),
+            child: TextButton(
+              onPressed: _launchURL,
+              child: Text(
+                "Patreon",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+              ),
+            )
+          ),
+          Card(
+            margin: const EdgeInsets.all(8),
+            child: ListTile(
+              leading: Icon(Icons.info_outline),
+              title: Text(
+                "About",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              onTap: () {
+                _launchPrivacyPolicyURL();
+              },
+            ),
           )
         ],
       ),
@@ -83,5 +110,21 @@ class _SettingsViewState extends State<SettingsView> {
         title: Text(username),
       ),
     );
+  }
+}
+
+final Uri _url = Uri.parse('https://www.patreon.com/h12zstudios');
+
+Future<void> _launchURL() async {
+  if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
+    throw Exception('Could not launch $_url');
+  }
+}
+
+final Uri _privacyPolicyURL = Uri.parse('https://aboutoublie.h12z.me/');
+
+Future<void> _launchPrivacyPolicyURL() async {
+  if (!await launchUrl(_privacyPolicyURL, mode: LaunchMode.externalApplication)) {
+    throw Exception('Could not launch $_url');
   }
 }

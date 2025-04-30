@@ -37,7 +37,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
           password,
         );
 
-        // Connection successful
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => MainNavigationView(page: 0)),

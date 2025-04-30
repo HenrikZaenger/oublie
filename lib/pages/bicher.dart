@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:oublie/main.dart';
+import 'package:oublie/main_navigation_view.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -176,20 +177,24 @@ class _BicherViewState extends State<BicherView> {
                       });
                     },
                   ),
-                  Column(
-                    children: books[index].map<Widget>((name) {
-                      subCounter++;
+                  ListView.builder(
+                    itemCount: books[index].length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemBuilder: (context, subIndex) {
                       return Padding(
                         padding: EdgeInsets.only(left: 32.0),
                         child: ListTile(
-                          title: Text(name),
+                          title: Text(books[index].elementAt(subIndex)),
                           trailing: IconButton(
-                            onPressed: () => _removeSubIndex(index, subCounter - 1),
-                            icon: Icon(Icons.delete_forever, color: Colors.redAccent)
+                              onPressed: () => {
+                                _removeSubIndex(index, subIndex)
+                              },
+                              icon: Icon(Icons.delete_forever, color: Colors.redAccent)
                           ),
                         ),
                       );
-                    }).toList()
+                    },
                   ),
                   Padding(
                     padding: EdgeInsets.only(left: 32.0),
@@ -246,6 +251,7 @@ class _BicherViewState extends State<BicherView> {
               FilePickerResult? result = await FilePicker.platform.pickFiles(
                 type: FileType.custom,
                 allowedExtensions: ['txt'],
+                withData: true,
               );
 
               if(result != null) {
@@ -253,8 +259,10 @@ class _BicherViewState extends State<BicherView> {
 
                 PlatformFile file = result.files.first;
 
+                prefs.setString("books", utf8.decode(file.bytes!));
+
                 setState(() {
-                  prefs.setString("books", utf8.decode(file.bytes!));
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainNavigationView(page: 2)));
                 });
 
               }

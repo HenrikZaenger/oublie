@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:oublie/loading.dart';
-import 'package:oublie/main.dart';
-import 'package:oublie/main_navigation_view.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SelectSchoolView extends StatefulWidget {
@@ -19,20 +17,9 @@ class _SelectSchoolViewState extends State<SelectSchoolView> {
 
   Future<void> searchSchools(String query) async {
     setState(() => isLoading = true);
-    final url = Uri.parse('https://mobile.webuntis.com/ms/schoolquery2');
-    final body = '''
-    {
-      "id":"wu_schulsuche-1745851124430",
-      "jsonrpc":"2.0",
-      "method":"searchSchool",
-      "params":[
-        {
-          "search":"${controller.text}"
-        }
-      ]
-    }
-                 ''';
-    final response = await http.post(url, body: body);
+    final url = Uri.parse('https://oublie.h12z.me/schoolsearch?s=$query');
+
+    final response = await http.get(url);
     setState(() => isLoading = false);
 
     if (response.statusCode == 200) {
@@ -146,12 +133,13 @@ class _LoginScreenState extends State<LoginScreen> {
             SizedBox(height: 20),
             TextField(
               controller: userController,
-              decoration: InputDecoration(labelText: 'Username'),
+              decoration: InputDecoration(labelText: 'IAM (ouni @school.lu)'),
             ),
             TextField(
               controller: passController,
               obscureText: true,
               decoration: InputDecoration(labelText: 'Password'),
+              onSubmitted: (_) => login,
             ),
             SizedBox(height: 20),
             Center(
