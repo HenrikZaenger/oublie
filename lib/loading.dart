@@ -23,7 +23,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
     final loggedIn = prefs.getBool('loggedIn') ?? false;
 
     if (loggedIn) {
-      // Try connecting to Untis
       try {
         final server = prefs.getString('server') ?? '';
         final school = prefs.getString('school') ?? '';

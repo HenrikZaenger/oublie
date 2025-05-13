@@ -1,7 +1,6 @@
 import 'package:dart_untis_mobile/dart_untis_mobile.dart';
 import 'package:flutter/material.dart';
 import 'package:oublie/splash_screen.dart';
-import 'loading.dart';
 
 void main() {
   runApp(const MyApp());

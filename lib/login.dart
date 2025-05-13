@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:oublie/loading.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SelectSchoolView extends StatefulWidget {
   @override
@@ -111,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
     prefs.setString("username", user);
     prefs.setString("password", pass);
 
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => LoadingScreen(),
@@ -147,10 +148,25 @@ class _LoginScreenState extends State<LoginScreen> {
                 onPressed: login,
                 child: Text('Login'),
               ),
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: Text(
+                textAlign: TextAlign.center,
+                "Wann du däin passwuert net wees kanns du en\nan der Untis app enner \"Profil\", \"Passwort ändern\"\nan \"Passwort vergessen\" zerècksetzen."
+              )
             )
           ],
         ),
       ),
     );
+  }
+}
+
+final Uri _url = Uri.parse('https://instructions.h12z.me/');
+
+Future<void> _launchURL() async {
+  if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
+    throw Exception('Could not launch $_url');
   }
 }
