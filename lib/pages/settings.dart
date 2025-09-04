@@ -1,44 +1,33 @@
-import 'package:flutter/material.dart';
-import 'package:oublie/class_selector.dart';
-import 'package:dart_untis_mobile/dart_untis_mobile.dart';
-import 'package:oublie/main.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
 
-class SettingsView extends StatefulWidget {
-  const SettingsView({super.key, required this.title});
-  final String title;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:oublie/dart_untis_mobile_local/lib/dart_untis_mobile.dart';
+import 'package:oublie/main.dart' as main;
+import 'package:oublie/untis_login.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+class Settings extends StatefulWidget {
   @override
-  State<SettingsView> createState() => _SettingsViewState();
+  State<StatefulWidget> createState() => _SettingsState();
 }
 
-class _SettingsViewState extends State<SettingsView> {
+class _SettingsState extends State<Settings> {
 
-  bool loading = true;
-  String className = "";
-  String username = "";
+  bool loading = false;
+  String displayName = "error";
+  String username = "error";
+  List<UntisSubject> subjects = List.empty(growable: true);
+  Map<String, List<dynamic>> books = {};
+  Map<int, bool> expanded = {};
 
   @override
   void initState() {
+    loadData();
     super.initState();
-    getData();
-  }
-
-  Future<void> getData() async {
-    UntisSession? session = UntisManager.session;
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    UntisStudentData data = await session!.getUserData();
-    username = data.displayName;
-    int classID = prefs.getInt("classID") ?? 0;
-    if(classID == 0) {
-      className = "Perséinlech";
-    } else {
-      UntisClass? classData = await session.getClassById(classID);
-      className = classData?.longName ?? "Error";
-    }
-     setState(() {
-       loading = false;
-     });
   }
 
   @override
@@ -51,80 +40,291 @@ class _SettingsViewState extends State<SettingsView> {
       );
     }
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Card(
-            margin: const EdgeInsets.all(8),
-            child: ListTile(
-              title: Text(
-                "Klass",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      appBar: AppBar(
+        title: Text("Astellungen"),
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          spacing: 10,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 10,
+                    children: [
+                      Text("Account", style: TextStyle(fontWeight: FontWeight.bold)),
+                      ListTile(
+                        title: Text(displayName),
+                        subtitle: Text(username),
+                      ),
+                      Center(
+                        child: FilledButton.tonal(
+                          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: logout,
+                          child: Text("Ausloggen"),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              subtitle: Text(className),
-              onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => ClassSelector()));
-              },
             ),
-          ),
-          Card(
-            margin: const EdgeInsets.all(8),
-            child: ListTile(
-              title: Text(
-                "Open source Licenses",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                showLicensePage(context: context);
-              },
-            ),
-          ),
-          Spacer(),
-          Card(
-            margin: const EdgeInsets.all(8),
-            child: TextButton(
-              onPressed: _launchURL,
-              child: Text(
-                "Patreon",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: 10,
+                    children: [
+                      Text("Bicher", style: TextStyle(fontWeight: FontWeight.bold)),
+                      if(subjects.isNotEmpty) Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(subjects.length, (index) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                title: Text(subjects[index].longName, style: TextStyle(fontWeight: FontWeight.bold)),
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Center(
+                                      child: Text("${(books["${subjects[index].id.id}"] ?? []).length}"),
+                                    ),
+                                    Icon(
+                                      expanded[subjects[index].id.id]! ? Icons.expand_less : Icons.expand_more
+                                    ),
+                                  ],
+                                ),
+                                onTap: () {
+                                  setState(() {
+                                    expanded[subjects[index].id.id] = !(expanded[subjects[index].id.id] ?? false);
+                                  });
+                                },
+                              ),
+                              if(expanded[subjects[index].id.id]!) SizedBox(height: 10,),
+                              if(expanded[subjects[index].id.id]!) Column(
+                                mainAxisSize: MainAxisSize.min,
+                                spacing: 10,
+                                children: List.generate((books["${subjects[index].id.id}"] ?? []).length + 1, (jindex) {
+        
+                                  if((books["${subjects[index].id.id}"] ?? []).length == jindex) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(left: 10),
+                                      child: ListTile(
+                                        title: Text("Buch hinzufügen"),
+                                        leading: Icon(Icons.add),
+                                        onTap: () {
+                                          editBook(subjects[index].id.id, jindex, "", true);
+                                        },
+                                      ),
+                                    );
+                                  }
+        
+                                  return Padding(
+                                    padding: EdgeInsets.only(left: 10),
+                                    child: ListTile(
+                                      title: Text((books["${subjects[index].id.id}"] ?? [])[jindex]),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        spacing: 10,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(Icons.edit),
+                                            onPressed: () {editBook(subjects[index].id.id, jindex, (books["${subjects[index].id.id}"] ?? [])[jindex], false);},
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.delete),
+                                            color: Colors.red,
+                                            onPressed: () {
+                                              setState(() {
+                                                books["${subjects[index].id.id}"]!.removeAt(jindex);
+                                                saveBooks();
+                                              });
+                                            },
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              )
+                            ],
+                          );
+                        }),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          IconButton(
+                            icon: Icon(Icons.share),
+                            onPressed: share,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.upload),
+                            onPressed: import,
+                          )
+                        ],
+                      )
+                    ],
+                  ),
+                ),
               ),
             )
-          ),
-          Card(
-            margin: const EdgeInsets.all(8),
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
-              title: Text(
-                "About",
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              onTap: () {
-                _launchPrivacyPolicyURL();
-              },
-            ),
-          )
-        ],
-      ),
-      appBar: AppBar(
-        title: Text(username),
+          ],
+        ),
       ),
     );
   }
-}
 
-final Uri _url = Uri.parse('https://www.patreon.com/h12zstudios');
-
-Future<void> _launchURL() async {
-  if (!await launchUrl(_url, mode: LaunchMode.externalApplication)) {
-    throw Exception('Could not launch $_url');
+  void share() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    SharePlus.instance.share(ShareParams(
+      fileNameOverrides: ["OublieBooks.json"],
+      files: [XFile.fromData(utf8.encode(preferences.getString("untisBicher") ?? ""))]
+    ));
   }
-}
 
-final Uri _privacyPolicyURL = Uri.parse('https://aboutoublie.h12z.me/');
-
-Future<void> _launchPrivacyPolicyURL() async {
-  if (!await launchUrl(_privacyPolicyURL, mode: LaunchMode.externalApplication)) {
-    throw Exception('Could not launch $_url');
+  void import() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ["json"],
+      withData: true
+    );
+    if(result == null) {
+      return;
+    }
+    if (result.files.first.name.toLowerCase().endsWith('.json')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid datei')),
+      );
+      return;
+    }
+    String data = utf8.decode(result.files.first.bytes!);
+    preferences.setString("untisBicher", data);
+    Map<String, dynamic> booksTemp = jsonDecode(data);
+    booksTemp.forEach((k, v) {
+      List<dynamic> bookTemp = v;
+      books[k] = bookTemp;
+    });
   }
+
+  void editBook(int subjectId, int bookIndex, String oldText, bool add) async {
+    String newText = await showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        TextEditingController book = TextEditingController(text: oldText);
+        return AlertDialog(
+          title: Text("Buch bearbeschten/hinzufügen"),
+          content: TextField(
+            controller: book,
+            onSubmitted: (text) {
+              if(text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Du musst en numm fir d'buch aginn!")));
+              }
+              Navigator.pop(context, text);
+            },
+          ),
+          actions: [
+            FilledButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.pop(context, oldText);
+              },
+            ),
+            FilledButton(
+              child: Text("OK"),
+              onPressed: () {
+                if(book.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Du musst en numm fir d'buch aginn!")));
+                }
+                Navigator.pop(context, book.text);
+              },
+            )
+          ],
+        );
+      }
+    ) ?? "";
+    if(newText.isEmpty) return;
+    setState(() {
+      if(books["$subjectId"] == null) {
+        books["$subjectId"] = List.empty(growable: true);
+      }
+      if(add) {
+        books["$subjectId"]!.add(newText);
+      } else {
+        books["$subjectId"]![bookIndex] = newText;
+      }
+    });
+    saveBooks();
+  }
+
+  void loadData() async {
+    setState(() {
+      loading = true;
+    });
+    displayName = (await main.session!.getUserData()).displayName;
+    username = (await main.session!.getUserData()).username;
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    Map<String, dynamic> booksTemp = jsonDecode(preferences.getString("untisBicher") ?? "{}");
+    booksTemp.forEach((k, v) {
+      List<dynamic> bookTemp = v;
+      books[k] = bookTemp;
+    });
+    subjects = await getSubjects();
+    for (var subject in subjects) {
+      expanded[subject.id.id] = false;
+    }
+    setState(() {
+      loading = false;
+    });
+  }
+
+  void saveBooks() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.setString("untisBicher", jsonEncode(books));
+  }
+
+  void logout() async {
+
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.clear();
+    FlutterSecureStorage secureStorage = FlutterSecureStorage();
+    secureStorage.delete(key: "untisPassword");
+
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => UntisLogin()));
+
+  }
+
+  Future<List<UntisSubject>> getSubjects() async {
+
+    List<UntisSubject> subjects = List.empty(growable: true);
+
+    List<UntisPeriod> periods = await main.session!.getTimetablePeriods(
+      (await main.session!.getUserData()).id,
+      startDate: DateTime.now().subtract(Duration(days: 14)),
+      endDate: DateTime.now()
+    );
+
+    for (var period in periods) {
+      for (var subject in period.subjects) {
+        if(!subjects.contains(subject)) {
+          subjects.add(subject);
+        }
+      }
+    }
+
+    return subjects;
+
+  }
+
 }
