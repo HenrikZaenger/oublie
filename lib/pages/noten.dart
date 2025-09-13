@@ -10,7 +10,9 @@ class _NotenState extends State<Noten> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      body: Center(
+        child: Text("Coming Soon"),
+      ),
     );
   }
 }
